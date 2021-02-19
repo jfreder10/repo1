@@ -1,0 +1,227 @@
+---
+title: "l"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##MapProto
+
+```{r cars}
+
+#numeric cols in map ufo 
+library(shiny)
+library(leaflet)
+library(leaflet.extras)
+
+numcols<-c()
+for (i in 1:ncol(MAPUFO)) {
+  if(class(MAPUFO[,i])=="numeric"){
+    numcols[i]<-i
+  }else{
+    numcols[i]<-NA
+  }
+}
+numcols
+
+colnames(MAPUFO)[numcols[which(is.na(numcols)==F)][1]]
+
+#proto to make all numeric cols optional 
+#MAPUFO$Length, replace with this 
+
+
+ui <- fluidPage(
+  titlePanel("UFO Map Application"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("mdt", "Choose Variable from ufo data (numeric only)",
+                  choices = colnames(MAPUFO)[numcols[which(is.na(numcols)==F)]]),
+      selectInput("place", "Select a location to focus on",
+             choices = c("All",levels(MAPUFO$country)), selected = "All"),
+      sliderInput("topn", "Select the top whatever", 
+                  min = 1,max = 25,value = 1), 
+      selectInput("colorcode", "Select yes if want to highlight the top n cities in any given country",
+                  choices = c("yes", "no"), selected = "no")),
+    
+    mainPanel( 
+      #this will create a space for us to display our map
+      leafletOutput(outputId = "mymap"),verbatimTextOutput("warn"),verbatimTextOutput("datatable"), plotOutput("dist")
+    )
+  )
+)
+
+
+
+
+
+
+
+
+
+
+
+server <- function(input, output, session) {
+  #define the color pallate for the magnitidue of the earthquake
+
+  
+  
+  pal <- colorFactor(
+    palette = c('green',  'red', 'black'),
+    domain = c(0:100000000))#this is causing the reactive error
+
+
+  
+ 
+  
+  #make reactive statement to get all possible colnames 
+  
+  
+
+
+ output$mymap <-renderLeaflet({ 
+    
+      addCircles(addTiles(setView(leaflet(MAPUFO),lng = -99, lat = 45, zoom = 1)),data = MAPUFO, lat =MAPUFO$latitude, lng = MAPUFO$longitude, weight = 1, radius = log10(MAPUFO$Length)*2, popup = as.character(MAPUFO$Length), label = as.character(paste0("Length: ", sep = " ", MAPUFO$CityAndLength)), color = pal(MAPUFO[which(colnames(MAPUFO)==input$mdt)]), fillOpacity = 1) 
+ })
+           
+  
+}
+
+
+
+shinyApp(ui, server)
+
+
+
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+
+
+
+
+
+
+ui <- fluidPage(
+  titlePanel("UFO Map Application"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("mdt", "Choose Variable from ufo data (numeric only)",
+                  choices = colnames(MAPUFO)[numcols[which(is.na(numcols)==F)]]),
+      selectInput("place", "Select a location to focus on",
+             choices = c("All",levels(MAPUFO$country)), selected = "All"),
+      sliderInput("topn", "Select the top whatever", 
+                  min = 1,max = 25,value = 1), 
+      selectInput("colorcode", "Select yes if want to highlight the top n cities in any given country",
+                  choices = c("yes", "no"), selected = "no")),
+    
+    mainPanel( 
+      #this will create a space for us to display our map
+      verbatimTextOutput("datatable")
+    )
+  )
+)
+
+
+
+
+
+
+
+
+
+server <- function(input, output, session) {
+  #define the color pallate for the magnitidue of the earthquake
+ Funs<-reactive({
+   vars<-as.numeric(MAPUFO$$Length)
+    
+    return( list(vars=vars))
+ })
+ 
+ output$datatable<-renderPrint({
+   print(mean(Funs()$vars, na.rm = T))
+ })
+}
+
+
+shinyApp(ui, server)
+
+
+
+
+
+```
+
+Reactive map with only var input 
+
+
+
+```{r}
+
+
+
+ui <- fluidPage(
+  titlePanel("UFO Map Application"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("mdt", "Choose Variable from ufo data (numeric only)",
+                  choices = c("$$Length","Distance"))
+      ),
+    
+    mainPanel( 
+      #this will create a space for us to display our map
+      verbatimTextOutput("mean")
+    )
+  )
+)
+
+
+
+
+
+
+
+
+
+
+server <- function(input, output, session) {
+  
+  Funs<-reactive({
+    $Length<-MAPUFO$$Length_of_encounter_seconds
+    Distance<-MAPUFO$Distance
+    return( list($Length=$Length, Distance=Distance))
+  })
+  
+  output$mean<-verbatimTextOutput({
+    print(mean(Funs()$$Length, na.rm = T))
+  })
+   
+  
+  
+}
+   
+   
+shinyApp(ui, server)
+
+   
+   
+   
+  
+   
+   
+   
+   
+   
+```
+
+
+Set reactive variable to all variables from Mapufo needed but name them the same names as the input mdt. Hopfully will be able to call them with Funs()$input$mdt 
+
+
